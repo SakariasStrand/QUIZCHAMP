@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Champagne Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        #quiz-container {
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #ffffff;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background-color: #e6f2ff;
+        }
+        button.selected {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+        #result {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Champagne Quiz</h1>
+    <button id="start-btn">Start Quiz</button>
+    <div id="quiz-container" style="display:none;">
+        <h2 id="question"></h2>
+        <div id="options"></div>
+        <button id="submit-btn" style="display:none;">Submit Answer</button>
+    </div>
+    <div id="result"></div>
+
+    <script>
+        const champagneProducers = [
+            {name: "Bollinger", village: "Aÿ", classification: "Grand Cru", region: "Vallée de la Marne", type: "Grandes Maisons"},
+            {name: "Taittinger", village: "Reims", classification: "Autre Cru", region: "Montagne de Reims", type: "Grandes Maisons"},
+            {name: "Veuve Clicquot", village: "Reims", classification: "Autre Cru", region: "Montagne de Reims", type: "Grandes Maisons"},
+            {name: "Dom Pérignon", village: "Hautvillers", classification: "Premier Cru", region: "Vallée de la Marne", type: "Négociant-Manipulant"},
+            {name: "Krug", village: "Reims", classification: "Autre Cru", region: "Montagne de Reims", type: "Grandes Maisons"},
+            {name: "Ruinart", village: "Reims", classification: "Autre Cru", region: "Montagne de Reims", type: "Grandes Maisons"},
+            {name: "Pol Roger", village: "Épernay", classification: "Autre Cru", region: "Côte des Blancs", type: "Grandes Maisons"},
+            {name: "Louis Roederer", village: "Reims", classification: "Autre Cru", region: "Montagne de Reims", type: "Grandes Maisons"},
+            {name: "Perrier-Jouët", village: "Épernay", classification: "Autre Cru", region: "Côte des Blancs", type: "Grandes Maisons"},
+            {name: "Moët & Chandon", village: "Épernay", classification: "Autre Cru", region: "Vallée de la Marne", type: "Grandes Maisons"}
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let questions = [];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function generateQuestions() {
+            const questionTypes = [
+                generateClassificationQuestion,
+                generateRegionQuestion,
+                generateTypeQuestion,
+                generateVillageQuestion,
+                generateGrandCruQuestion
+            ];
+
+            questions = [];
+            while (questions.length < 10) {
+                const randomQuestionFunction = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+                const newQuestion = randomQuestionFunction();
+                if (newQuestion.options.every(option => option !== "")) {
+                    questions.push(newQuestion);
+                }
+            }
+            shuffleArray(questions);
+        }
+
+        function generateClassificationQuestion() {
+            const producer = champagneProducers[Math.floor(Math.random() * champagneProducers.length)];
+            return {
+                question: `What is the classification of ${producer.name}?`,
+                correctAnswer: producer.classification,
+                options: shuffleArray([...new Set(champagneProducers.map(p => p.classification))])
+            };
+        }
+
+        function generateRegionQuestion() {
+            const producer = champagneProducers[Math.floor(Math.random() * champagneProducers.length)];
+            return {
+                question: `In which region is ${producer.name} located?`,
+                correctAnswer: producer.region,
+                options: shuffleArray([...new Set(champagneProducers.map(p => p.region))])
+            };
+        }
+
+        function generateTypeQuestion() {
+            const producer = champagneProducers[Math.floor(Math.random() * champagneProducers.length)];
+            return {
+                question: `What type of producer is ${producer.name}?`,
+                correctAnswer: producer.type,
+                options: shuffleArray([...new Set(champagneProducers.map(p => p.type))])
+            };
+        }
+
+        function generateVillageQuestion() {
+            const producer = champagneProducers[Math.floor(Math.random() * champagneProducers.length)];
+            return {
+                question: `Which of the following producers is from ${producer.village}?`,
+                correctAnswer: producer.name,
+                options: shuffleArray([producer.name, ...shuffleArray(champagneProducers.filter(p => p.name !== producer.name).map(p => p.name)).slice(0, 3)])
+            };
+        }
+
+        function generateGrandCruQuestion() {
+            const grandCruProducers = champagneProducers.filter(p => p.classification === "Grand Cru");
+            const producer = grandCruProducers[Math.floor(Math.random() * grandCruProducers.length)];
+            return {
+                question: "Which of the following producers has a Grand Cru classification?",
+                correctAnswer: producer.name,
+                options: shuffleArray([producer.name, ...shuffleArray(champagneProducers.filter(p => p.classification !== "Grand Cru").map(p => p.name)).slice(0, 3)])
+            };
+        }
+
+        function displayQuestion() {
+            const questionEl = document.getElementById('question');
+            const optionsEl = document.getElementById('options');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            questionEl.textContent = `Question ${currentQuestion + 1}/10: ${questions[currentQuestion].question}`;
+            optionsEl.innerHTML = '';
+            questions[currentQuestion].options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.addEventListener('click', () => selectOption(button));
+                optionsEl.appendChild(button);
+            });
+            submitBtn.style.display = 'inline-block';
+        }
+
+        function selectOption(selectedButton) {
+            const options = document.querySelectorAll('#options button');
+            options.forEach(option => option.classList.remove('selected'));
+            selectedButton.classList.add('selected');
+        }
+
+        function submitAnswer() {
+            const selectedOption = document.querySelector('#options button.selected');
+            if (!selectedOption) return;
+            
+            if (selectedOption.textContent === questions[currentQuestion].correctAnswer) {
+                score++;
+            }
+            
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                displayQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            const quizContainer = document.getElementById('quiz-container');
+            const resultEl = document.getElementById('result');
+            const startBtn = document.getElementById('start-btn');
+            quizContainer.style.display = 'none';
+            resultEl.textContent = `You got ${score} out of ${questions.length} correct!`;
+            startBtn.textContent = 'Restart Quiz';
+            startBtn.style.display = 'inline-block';
+        }
+
+        function startQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            generateQuestions();
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+            document.getElementById('result').textContent = '';
+            displayQuestion();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('start-btn').addEventListener('click', startQuiz);
+            document.getElementById('submit-btn').addEventListener('click', submitAnswer);
+        });
+    </script>
+</body>
+</html>
